@@ -1,0 +1,36 @@
+claim_id,policy_holder,area,date,vehicle,photo,claimant_text
+CLM-0001,Sahil Demo-Khan,Borivali,2026-07-19,Maruti Swift (hatchback),demo_01.jpg,Got stuck near the subway in the evening rain. Had to leave the car and walk home.
+CLM-0002,Neha Demo-Patil,Malad,2026-07-18,Maruti Swift (hatchback),demo_02.jpg,Car was completely submerged up to the roof in the basement parking. Please process total loss.
+CLM-0003,Farhan Demo-Shah,Kurla,2026-07-17,Toyota Innova (MPV),demo_03.jpg,Got stuck near the subway in the evening rain. Had to leave the car and walk home.
+CLM-0004,Kavita Demo-Patil,Hindmata,2026-07-17,Maruti Swift (hatchback),demo_04.jpg,"Water reached the windows, I had to climb out. Engine, gearbox and all electronics damaged."
+CLM-0005,Sneha Demo-Iyer,Bandra,2026-07-14,Toyota Innova (MPV),demo_05.jpg,Car was parked in our lane overnight during heavy rain. Next morning it would not start.
+CLM-0006,Kavita Demo-Shah,Hindmata,2026-07-20,Honda City (sedan),demo_06.jpg,"Knee-deep water near the station, tyres fully under water, car stopped and I pushed it out."
+CLM-0007,Zoya Demo-Khan,Hindmata,2026-07-14,Mahindra XUV (SUV),demo_07.jpg,Car was completely submerged up to the roof in the basement parking. Please process total loss.
+CLM-0008,Ananya Demo-Patil,Bandra,2026-07-18,Tata Nexon (SUV),demo_08.jpg,"Water entered inside the car up to the seats. Carpets and seats soaked, electricals not working."
+CLM-0009,Sneha Demo-Pillai,Kurla,2026-07-18,Maruti Swift (hatchback),demo_09.jpg,"Water reached the windows, I had to climb out. Engine, gearbox and all electronics damaged."
+CLM-0010,Farhan Demo-Joshi,Hindmata,2026-07-17,Maruti Dzire (sedan),demo_10.jpg,"Water rose up to the windows, car was almost fully under water. Total loss, engine seized."
+CLM-0011,Kunal Demo-Joshi,Malad,2026-07-16,Tata Nexon (SUV),demo_11.jpg,"Water was ankle deep around the car, only touched the tyres. Some noise from the brakes now."
+CLM-0012,Kavita Demo-Patil,Bandra,2026-07-16,Tata Punch (micro-SUV),demo_12.jpg,"Water entered inside the car up to the seats. Carpets and seats soaked, electricals not working."
+CLM-0013,Rahul Demo-Desai,Bandra,2026-07-14,Hyundai i20 (hatchback),demo_13.jpg,Car was completely submerged up to the roof in the basement parking. Please process total loss.
+CLM-0014,Zoya Demo-Khan,Malad,2026-07-15,Tata Punch (micro-SUV),demo_14.jpg,"Water came inside the cabin, mats floating. Car stuck for 6 hours."
+CLM-0015,Priya Demo-Patil,Hindmata,2026-07-18,Maruti Dzire (sedan),demo_15.jpg,"Water entered inside the car up to the seats. Carpets and seats soaked, electricals not working."
+CLM-0016,Pooja Demo-Kulkarni,Ghatkopar,2026-07-18,Tata Punch (micro-SUV),demo_16.jpg,Got stuck near the subway in the evening rain. Had to leave the car and walk home.
+CLM-0017,Imran Demo-Desai,Ghatkopar,2026-07-19,Hyundai i20 (hatchback),demo_17.jpg,Car was parked in our lane overnight during heavy rain. Next morning it would not start.
+CLM-0018,Meera Demo-Kulkarni,Ghatkopar,2026-07-16,Toyota Innova (MPV),demo_18.jpg,"Water entered inside the car up to the seats. Carpets and seats soaked, electricals not working."
+CLM-0019,Rohan Demo-Joshi,Malad,2026-07-15,Hyundai i20 (hatchback),demo_19.jpg,"Water rose up to the windows, car was almost fully under water. Total loss, engine seized."
+CLM-0020,Priya Demo-Iyer,Chembur,2026-07-15,Tata Nexon (SUV),demo_20.jpg,"Water came inside the cabin, mats floating. Car stuck for 6 hours."
+CLM-0021,Nikhil Demo-Joshi,Kurla,2026-07-15,Tata Punch (micro-SUV),demo_21.jpg,"Water came inside the cabin, mats floating. Car stuck for 6 hours."
+CLM-0022,Neha Demo-Desai,Sion,2026-07-20,Toyota Innova (MPV),demo_22.jpg,Car was completely submerged up to the roof in the basement parking. Please process total loss.
+CLM-0023,Aditya Demo-Mehta,Malad,2026-07-19,Toyota Innova (MPV),demo_23.jpg,"Water came up to the top of the tyres, roughly knee deep. Engine stalled while driving."
+CLM-0024,Vikram Demo-Patil,Sion,2026-07-15,Tata Nexon (SUV),demo_24.jpg,"Water came up to the top of the tyres, roughly knee deep. Engine stalled while driving."
+CLM-0025,Rohan Demo-Joshi,Bandra,2026-07-15,Mahindra XUV (SUV),demo_25.jpg,"Knee-deep water near the station, tyres fully under water, car stopped and I pushed it out."
+CLM-0026,Rohan Demo-Khan,Borivali,2026-07-18,Maruti Dzire (sedan),demo_26.jpg,"Water reached the windows, I had to climb out. Engine, gearbox and all electronics damaged."
+CLM-0027,Kunal Demo-Rao,Sion,2026-07-19,Maruti Swift (hatchback),demo_27.jpg,"Water rose up to the windows, car was almost fully under water. Total loss, engine seized."
+CLM-0028,Neha Demo-Mehta,Borivali,2026-07-17,Toyota Innova (MPV),demo_28.jpg,Got stuck near the subway in the evening rain. Had to leave the car and walk home.
+CLM-0029,Divya Demo-Mehta,Andheri,2026-07-15,Hyundai i20 (hatchback),demo_29.jpg,"Water came up to the top of the tyres, roughly knee deep. Engine stalled while driving."
+CLM-0030,Rahul Demo-Khan,Kurla,2026-07-16,Maruti Swift (hatchback),demo_30.jpg,Got stuck near the subway in the evening rain. Had to leave the car and walk home.
+CLM-0031,Rohan Demo-Kulkarni,Sion,2026-07-18,Hyundai i20 (hatchback),india_01.jpg,"Water entered inside the car up to the seats. Carpets and seats soaked, electricals not working."
+CLM-0032,Ritu Demo-Shah,Kurla,2026-07-20,Tata Nexon (SUV),india_05.jpg,"Water reached the windows, I had to climb out. Engine, gearbox and all electronics damaged."
+CLM-0033,Nikhil Demo-Khan,Chembur,2026-07-16,Maruti Dzire (sedan),india_06.jpg,"Water rose up to the windows, car was almost fully under water. Total loss, engine seized."
+CLM-0034,Rahul Demo-Joshi,Ghatkopar,2026-07-21,Hyundai i20 (hatchback),CLM-DUP1.jpg,Car was completely submerged up to the roof in the basement parking. Please process total loss.
+CLM-0035,Vikram Demo-Patil,Malad,2026-07-21,Tata Punch (micro-SUV),CLM-DUP2.jpg,Car was completely submerged up to the roof in the basement parking. Please process total loss.

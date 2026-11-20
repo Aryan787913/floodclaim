@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>floodclaim · Flood claims queue</title>
+<style>
+  :root {
+    --bg: #f3f5f9; --panel: #ffffff; --ink: #0f172a; --ink2: #334155; --muted: #64748b; --line: #e5e9f0; --line2: #eef1f6;
+    --brand: #1d4ed8; --brand2: #0ea5e9; --brand-soft: #eaf1ff;
+    --l0: #16a34a; --l1: #65a30d; --l2: #eab308; --l3: #ea580c; --l4: #dc2626; --ct: #64748b;
+    --red-bg: #fef2f2; --red: #b91c1c; --red-line: #fecaca;
+    --amber-bg: #fffbeb; --amber: #92400e; --amber-line: #fde68a;
+    --blue-bg: #eff6ff; --blue: #1e40af; --blue-line: #bfdbfe;
+    --shadow-sm: 0 1px 2px rgba(15,23,42,.05);
+    --shadow: 0 1px 3px rgba(15,23,42,.06), 0 8px 24px -12px rgba(15,23,42,.12);
+    --shadow-lg: 0 24px 60px -20px rgba(15,23,42,.35);
+    --ease: cubic-bezier(.2,.8,.2,1);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font: 14px/1.5 "Inter", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    background: radial-gradient(1200px 400px at 10% -10%, #e0ecff 0%, transparent 60%), var(--bg); color: var(--ink);
+    -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  .sub { color: var(--muted); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ---------- header ---------- */
+  header { display: flex; align-items: center; gap: 14px; padding: 12px 24px; position: sticky; top: 0; z-index: 10;
+    background: rgba(255,255,255,.82); backdrop-filter: saturate(180%) blur(12px); -webkit-backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--line); animation: drop .5s var(--ease) both; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .mark { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--brand), var(--brand2)); box-shadow: 0 6px 16px -6px rgba(29,78,216,.6); }
+  .mark svg { width: 20px; height: 20px; }
+  .logo { font-weight: 750; font-size: 18px; letter-spacing: -.3px; line-height: 1.1; }
+  .logo span { background: linear-gradient(90deg, var(--brand), var(--brand2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tag { font-size: 12px; color: var(--muted); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-left: 6px; }
+  .chip { font-size: 11.5px; font-weight: 550; padding: 4px 9px; border-radius: 999px; background: var(--blue-bg); color: var(--blue);
+    border: 1px solid var(--blue-line); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+  .chip.warn { background: var(--amber-bg); color: var(--amber); border-color: var(--amber-line); }
+  .chip .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
+  .spacer { flex: 1; }
+
+  /* ---------- buttons ---------- */
+  button { font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink2);
+    padding: 8px 14px; font-weight: 550; display: inline-flex; align-items: center; gap: 8px;
+    transition: transform .15s var(--ease), box-shadow .2s var(--ease), background .2s, border-color .2s, color .2s; }
+  button:hover:not(:disabled) { border-color: #cbd5e1; box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+  button:active:not(:disabled) { transform: translateY(0) scale(.98); }
+  button:focus-visible { outline: 3px solid rgba(29,78,216,.35); outline-offset: 2px; }
+  button.primary { background: linear-gradient(180deg, #2563eb, var(--brand)); color: #fff; border-color: var(--brand);
+    box-shadow: 0 6px 16px -8px rgba(29,78,216,.7); }
+  button.primary:hover:not(:disabled) { box-shadow: 0 10px 22px -8px rgba(29,78,216,.75); border-color: var(--brand); }
+  button:disabled { opacity: .7; cursor: progress; }
+  .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent;
+    animation: spin .7s linear infinite; display: inline-block; }
+
+  /* ---------- stats ---------- */
+  .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; padding: 18px 24px 0; }
+  .stat { position: relative; overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 14px 16px 12px; text-align: left; display: block; box-shadow: var(--shadow-sm);
+    animation: rise .55s var(--ease) both; animation-delay: calc(var(--i) * 60ms); }
+  .stat::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--accent, var(--brand)); opacity: .9; }
+  .stat:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .stat.active { border-color: var(--accent, var(--brand)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--brand)) 18%, transparent), var(--shadow); }
+  .stat b { display: block; font-size: 26px; font-weight: 750; letter-spacing: -.5px; color: var(--ink); line-height: 1.1; }
+  .stat small { color: var(--muted); font-weight: 500; font-size: 12.5px; }
+
+  /* ---------- layout ---------- */
+  main { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; padding: 16px 24px 32px; align-items: start; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+    animation: rise .6s var(--ease) both; animation-delay: .25s; }
+  .card-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .card-head h3 { margin: 0; font-size: 14px; font-weight: 650; }
+  .card-head .sub { font-size: 12px; }
+
+  /* ---------- table ---------- */
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid var(--line2); text-align: left; vertical-align: middle; }
+  th { font-size: 11px; color: var(--muted); font-weight: 600; background: #f8fafc; text-transform: uppercase; letter-spacing: .5px; }
+  tbody tr:last-child td { border-bottom: none; }
+  tr.row { cursor: pointer; position: relative; transition: background .18s; }
+  tr.row td:first-child { box-shadow: inset 3px 0 0 transparent; transition: box-shadow .2s; color: var(--muted); }
+  tr.row:hover { background: #f8fafc; }
+  tr.row.sel { background: var(--brand-soft); }
+  tr.row.sel td:first-child { box-shadow: inset 3px 0 0 var(--brand); }
+  tr.row.anim { animation: fadeRow .45s var(--ease) both; animation-delay: calc(var(--i) * 28ms); }
+  .thumb { width: 60px; height: 44px; object-fit: cover; border-radius: 8px; background: #e2e8f0; display: block;
+    transition: transform .25s var(--ease); }
+  tr.row:hover .thumb { transform: scale(1.06); }
+  .cid { font-weight: 650; }
+  .lvl { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; font-weight: 700; color: #fff;
+    border-radius: 7px; padding: 3px 7px; font-size: 12px; letter-spacing: .2px; box-shadow: inset 0 -1px 0 rgba(0,0,0,.12); }
+  .L0 { background: var(--l0); } .L1 { background: var(--l1); } .L2 { background: var(--l2); color: #1f2937; }
+  .L3 { background: var(--l3); } .L4 { background: var(--l4); } .cant_tell { background: var(--ct); }
+  .pending { background: #e2e8f0; color: #475569; }
+  .flag { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; margin: 2px 3px 2px 0;
+    white-space: nowrap; border: 1px solid transparent; }
+  .f-ex { background: var(--red-bg); color: var(--red); border-color: var(--red-line); }
+  .f-dup { background: var(--amber-bg); color: var(--amber); border-color: var(--amber-line); }
+  .f-ur { background: var(--blue-bg); color: var(--blue); border-color: var(--blue-line); }
+  .f-rev { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+
+  /* skeleton */
+  .sk { height: 12px; border-radius: 6px; background: linear-gradient(90deg, #eef2f7 0%, #f8fafc 50%, #eef2f7 100%);
+    background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+
+  /* ---------- detail ---------- */
+  .detail { padding: 18px; position: sticky; top: 74px; max-height: calc(100vh - 90px); overflow-y: auto; scrollbar-width: thin; }
+  .detail .inner { animation: slideIn .4s var(--ease) both; }
+  .photo-wrap { position: relative; border-radius: 12px; overflow: hidden; background: #0b1220; min-height: 200px; display: grid; place-items: center; }
+  .photo-wrap img { width: 100%; max-height: 320px; object-fit: contain; display: block; opacity: 0; transform: scale(1.02);
+    transition: opacity .45s var(--ease), transform .6s var(--ease); }
+  .photo-wrap img.loaded { opacity: 1; transform: scale(1); }
+  .photo-wrap .badge { position: absolute; left: 12px; top: 12px; }
+  .photo-wrap .badge .lvl { font-size: 13px; padding: 5px 10px; box-shadow: 0 6px 16px -6px rgba(0,0,0,.5); }
+  .detail h2 { margin: 14px 0 2px; font-size: 18px; letter-spacing: -.3px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .box { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: #fff; }
+  .box h4 { margin: 0 0 6px; font-size: 11px; color: var(--muted); font-weight: 650; text-transform: uppercase; letter-spacing: .6px; }
+  .mt { margin-top: 10px; }
+  .stagger > * { animation: rise .45s var(--ease) both; }
+  .stagger > *:nth-child(1) { animation-delay: .05s } .stagger > *:nth-child(2) { animation-delay: .1s }
+  .stagger > *:nth-child(3) { animation-delay: .15s } .stagger > *:nth-child(4) { animation-delay: .2s }
+  .stagger > *:nth-child(5) { animation-delay: .25s } .stagger > *:nth-child(6) { animation-delay: .3s }
+  .stagger > *:nth-child(7) { animation-delay: .35s } .stagger > *:nth-child(n+8) { animation-delay: .4s }
+  .alert { border-radius: 12px; padding: 11px 13px; border: 1px solid; display: flex; gap: 10px; align-items: flex-start; }
+  .alert .ic { flex: 0 0 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; color: #fff; margin-top: 1px; }
+  .alert.red { background: var(--red-bg); color: var(--red); border-color: var(--red-line); } .alert.red .ic { background: var(--red); }
+  .alert.amber { background: var(--amber-bg); color: var(--amber); border-color: var(--amber-line); } .alert.amber .ic { background: #d97706; }
+  .alert.blue { background: var(--blue-bg); color: var(--blue); border-color: var(--blue-line); } .alert.blue .ic { background: var(--brand); }
+  .bar { height: 7px; background: #eef2f7; border-radius: 999px; overflow: hidden; margin-top: 8px; }
+  .bar > div { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--brand), var(--brand2));
+    transition: width .9s var(--ease); }
+  .tabs { display: inline-flex; background: #f1f5f9; border-radius: 9px; padding: 3px; gap: 2px; }
+  .tabs button { border: none; background: transparent; border-radius: 7px; padding: 4px 11px; font-size: 12px; box-shadow: none; }
+  .tabs button:hover { transform: none !important; box-shadow: none !important; }
+  .tabs button.on { background: #fff; color: var(--ink); box-shadow: var(--shadow-sm) !important; }
+  .note { white-space: pre-wrap; margin-top: 10px; color: var(--ink2); animation: fade .3s ease both; }
+  .disclaimer { color: var(--muted); font-size: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+  .empty { padding: 48px 20px; text-align: center; color: var(--muted); }
+  .empty .big { font-size: 28px; margin-bottom: 6px; opacity: .6; }
+
+  /* ---------- dialog ---------- */
+  dialog { border: none; border-radius: 18px; padding: 22px 22px 18px; width: min(500px, 92vw); box-shadow: var(--shadow-lg); color: var(--ink); }
+  dialog[open] { animation: pop .3s var(--ease) both; }
+  dialog::backdrop { background: rgba(15,23,42,.45); backdrop-filter: blur(3px); animation: fade .25s ease both; }
+  dialog h3 { margin: 0 0 4px; font-size: 18px; letter-spacing: -.3px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--ink2); margin: 12px 0 5px; }
+  input, select, textarea { width: 100%; font: inherit; padding: 9px 11px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink);
+    transition: border-color .15s, box-shadow .15s; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(29,78,216,.15); }
+  input[type=file] { padding: 7px; background: #f8fafc; border-style: dashed; }
+  textarea { min-height: 72px; resize: vertical; }
+  .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+  /* ---------- toast ---------- */
+  #toasts { position: fixed; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 50; }
+  .toast { background: var(--ink); color: #fff; padding: 11px 14px; border-radius: 12px; box-shadow: var(--shadow-lg); font-size: 13px; max-width: 360px;
+    animation: toastIn .35s var(--ease) both; }
+  .toast.err { background: #7f1d1d; }
+  .toast.out { animation: toastOut .3s ease both; }
+
+  /* ---------- keyframes ---------- */
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes drop { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeRow { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+  @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: none; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
+  @keyframes toastOut { to { opacity: 0; transform: translateY(8px); } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; transition-duration: .01ms !important; } }
+
+  @media (max-width: 1100px) { .chips { display: none; } }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(3, 1fr); } .detail { position: static; max-height: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s-6 6.5-6 11a6 6 0 0 0 12 0c0-4.5-6-11-6-11z"/><path d="M9 15a3 3 0 0 0 3 3"/></svg></div>
+    <div><div class="logo">flood<span>claim</span></div><div class="tag">Monsoon flood claims · surveyor queue</div></div>
+  </div>
+  <div class="chips">
+    <span class="chip warn">Synthetic demo data</span>
+    <span class="chip" id="modelChip"><span class="dot"></span>Gemini</span>
+    <span class="chip" id="bqChip" hidden>Logged to BigQuery</span>
+  </div>
+  <div class="spacer"></div>
+  <button id="gradeBtn">Grade pending</button>
+  <button class="primary" id="newBtn">+ New claim</button>
+</header>
+
+<section class="stats" id="stats"></section>
+
+<main>
+  <div class="card">
+    <div class="card-head"><h3>Claims queue</h3><span class="sub" id="countLbl">Sorted by priority</span></div>
+    <table>
+      <thead><tr><th>#</th><th>Photo</th><th>Claim</th><th>Area</th><th>Level</th><th>Flags</th></tr></thead>
+      <tbody id="queue"></tbody>
+    </table>
+  </div>
+  <div class="card detail" id="detail"><div class="empty"><div class="big">🔎</div>Select a claim to see the evidence.</div></div>
+</main>
+
+<dialog id="dlg">
+  <form id="newForm">
+    <h3>New flood claim</h3>
+    <div class="sub">Photo is stripped of location data before it is stored or analysed.</div>
+    <label>Claim photo</label><input type="file" name="photo" accept="image/*" required>
+    <label>Policy holder</label><input name="policy_holder" placeholder="e.g. Demo Claimant">
+    <label>Area</label>
+    <select name="area">
+      <option>Andheri</option><option>Kurla</option><option>Sion</option><option>Dadar</option><option>Chembur</option>
+      <option>Malad</option><option>Borivali</option><option>Ghatkopar</option><option>Hindmata</option><option>Bandra</option>
+    </select>
+    <label>Vehicle</label><input name="vehicle" placeholder="e.g. Hatchback">
+    <label>How high did the water reach on the car? (claimant's answer)</label>
+    <select name="claimant_depth">
+      <option value="">Not stated</option>
+      <option>Only a wet road, no water on the car</option>
+      <option>Below half the tyre</option>
+      <option>Half to the top of the tyre</option>
+      <option>Above the tyres, up to the windows (doors / inside the car)</option>
+      <option>Up to the windows or higher</option>
+    </select>
+    <label>What the claimant says happened</label>
+    <textarea name="claimant_text" placeholder="e.g. Water came up to the windows, engine stopped near the subway."></textarea>
+    <div class="form-actions">
+      <button type="button" id="cancelBtn">Cancel</button>
+      <button class="primary" id="submitBtn">Submit &amp; grade</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toasts"></div>
+
+<script>
+const LABEL = {
+  L0: "Not flooded", L1: "Below half tyre", L2: "Half to full tyre",
+  L3: "Tyre top to window", L4: "Window or above", cant_tell: "Can't tell – need a better photo"
+};
+const CHECKS = {
+  L0: "No flood water on the car in this photo. Verify the flood-damage claim with more photos or an inspection.",
+  L1: "Shallow water. Check tyres, brakes and underbody. Likely a fast-track candidate.",
+  L2: "Water around the tyres and chassis. Check the underbody, exhaust and low wiring; ask whether the car was driven through water.",
+  L3: "Water above the tyres, near the doors. Check the cabin, carpets and electricals, and do not crank the engine before inspection.",
+  L4: "Water at or above the windows. Treat as a possible total loss; arrange a full inspection.",
+  cant_tell: "Ask the claimant for a clear, well-lit photo showing the whole car and the water line."
+};
+const FILTERS = [
+  ["all", "All claims", s => s.total, "#1d4ed8"],
+  ["severe", "Severe (L3–L4)", s => s.severe, "#dc2626"],
+  ["ex", "Possible exaggeration", s => s.exaggeration, "#b91c1c"],
+  ["dup", "Duplicate photos", s => s.duplicates, "#d97706"],
+  ["ct", "Need new photo", s => s.cant_tell, "#64748b"],
+  ["rev", "Models disagree", s => s.needs_review, "#7c3aed"],
+];
+let rows = [], filter = "all", selected = null, lang = "en", firstStats = true;
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const lvl = r => r ? `<span class="lvl ${r.level}">${r.level === "cant_tell" ? "?" : r.level}</span>` : `<span class="lvl pending">…</span>`;
+const alertBox = (cls, ic, html) => `<div class="alert ${cls} mt"><span class="ic">${ic}</span><div>${html}</div></div>`;
+
+function toast(msg, err) {
+  const t = document.createElement("div");
+  t.className = "toast" + (err ? " err" : ""); t.textContent = msg;
+  document.getElementById("toasts").appendChild(t);
+  setTimeout(() => { t.classList.add("out"); setTimeout(() => t.remove(), 300); }, err ? 6000 : 3000);
+}
+
+function countUp(el, to) {
+  const from = Number(el.dataset.v || 0); el.dataset.v = to;
+  if (from === to) { el.textContent = to; return; }
+  const t0 = performance.now(), d = 700;
+  const step = now => {
+    const p = Math.min(1, (now - t0) / d), e = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (to - from) * e);
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function flags(row) {
+  const r = row.result || {}, out = [];
+  if (r.mismatch === "possible_exaggeration") out.push(`<span class="flag f-ex">Possible exaggeration</span>`);
+  if (r.mismatch === "under_reported") out.push(`<span class="flag f-ur">Under-reported</span>`);
+  if (r.mismatch === "check_timing") out.push(`<span class="flag f-dup">Check photo timing</span>`);
+  if (row.duplicate_of) out.push(`<span class="flag f-dup">Duplicate of ${esc(row.duplicate_of)}</span>`);
+  if (r.needs_review) out.push(`<span class="flag f-rev">Models disagree</span>`);
+  if (r.error) out.push(`<span class="flag f-rev">Error</span>`);
+  return out.join("");
+}
+
+function matches(row) {
+  const r = row.result || {};
+  return filter === "all" ||
+    (filter === "severe" && ["L3", "L4"].includes(r.level)) ||
+    (filter === "ex" && r.mismatch === "possible_exaggeration") ||
+    (filter === "dup" && row.duplicate_of) ||
+    (filter === "ct" && r.level === "cant_tell") ||
+    (filter === "rev" && r.needs_review);
+}
+
+function renderStats(s) {
+  const box = document.getElementById("stats");
+  if (firstStats) {
+    box.innerHTML = FILTERS.map(([k, label, , c], i) =>
+      `<button class="stat" data-f="${k}" style="--i:${i};--accent:${c}"><b class="num">0</b><small>${label}</small></button>`).join("");
+    box.querySelectorAll(".stat").forEach(b => b.onclick = () => { filter = b.dataset.f; markFilter(); renderQueue(true); });
+    firstStats = false;
+  }
+  FILTERS.forEach(([k, , f]) => countUp(box.querySelector(`[data-f="${k}"] b`), Number(f(s)) || 0));
+  markFilter();
+  document.getElementById("modelChip").innerHTML = `<span class="dot"></span>Gemini · ${esc(s.model)}`;
+  document.getElementById("bqChip").hidden = !s.bigquery;
+}
+function markFilter() { document.querySelectorAll(".stat").forEach(b => b.classList.toggle("active", b.dataset.f === filter)); }
+
+function skeleton() {
+  document.getElementById("queue").innerHTML = Array.from({ length: 7 }, () =>
+    `<tr><td><div class="sk" style="width:14px"></div></td><td><div class="sk" style="width:60px;height:44px;border-radius:8px"></div></td>
+     <td><div class="sk" style="width:90px"></div><div class="sk" style="width:130px;margin-top:6px"></div></td>
+     <td><div class="sk" style="width:70px"></div></td><td><div class="sk" style="width:36px;height:20px"></div></td><td><div class="sk" style="width:110px"></div></td></tr>`).join("");
+}
+
+function renderQueue(animate) {
+  const list = rows.filter(matches);
+  const tb = document.getElementById("queue");
+  document.getElementById("countLbl").textContent = `${list.length} claim${list.length === 1 ? "" : "s"} · sorted by priority`;
+  if (!list.length) { tb.innerHTML = `<tr><td colspan="6" class="empty"><div class="big">✓</div>No claims in this view.</td></tr>`; return; }
+  tb.innerHTML = list.map((row, i) => `
+    <tr class="row ${animate ? "anim" : ""} ${row.claim_id === selected ? "sel" : ""}" style="--i:${Math.min(i, 20)}" data-id="${esc(row.claim_id)}">
+      <td class="num">${i + 1}</td>
+      <td><img class="thumb" loading="lazy" src="/api/photo/${encodeURIComponent(row.claim_id)}" alt=""></td>
+      <td><span class="cid">${esc(row.claim_id)}</span><br><span class="sub">${esc(row.policy_holder)} · ${esc(row.vehicle)}</span></td>
+      <td>${esc(row.area)}<br><span class="sub" style="white-space:nowrap">${esc(row.date)}</span></td>
+      <td>${lvl(row.result)}</td>
+      <td>${flags(row)}</td>
+    </tr>`).join("");
+  tb.querySelectorAll("tr.row").forEach(tr => tr.onclick = () => {
+    if (selected === tr.dataset.id) return;
+    selected = tr.dataset.id;
+    tb.querySelectorAll("tr.row").forEach(x => x.classList.toggle("sel", x === tr));
+    renderDetail();
+  });
+}
+
+function renderDetail() {
+  const el = document.getElementById("detail");
+  const row = rows.find(r => r.claim_id === selected);
+  if (!row) { el.innerHTML = `<div class="empty"><div class="big">🔎</div>Select a claim to see the evidence.</div>`; return; }
+  const r = row.result;
+  const pct = Math.round(((r && r.confidence) || 0) * 100);
+  let head = `<div class="photo-wrap"><img src="/api/photo/${encodeURIComponent(row.claim_id)}" alt="claim photo" onload="this.classList.add('loaded')">
+      ${r && r.level ? `<div class="badge">${lvl(r)}</div>` : ""}</div>
+    <h2>${esc(row.claim_id)} · ${esc(row.policy_holder)}</h2>
+    <div class="sub">${esc(row.vehicle)} · ${esc(row.area)}, Mumbai · ${esc(row.date)}</div>`;
+  let body = "";
+  if (!r) body = alertBox("blue", "i", "Not graded yet. Click “Grade pending”.");
+  else if (r.error && !r.evidence) body = alertBox("red", "!", esc(r.error));
+  else {
+    body += `<div class="row2">
+        <div class="box"><h4>Photo shows</h4>${lvl(r)} <b>${esc(LABEL[r.level])}</b>
+          <div class="bar"><div data-w="${pct}"></div></div>
+          <small class="sub">Confidence <span class="num">${pct}%</span></small></div>
+        <div class="box"><h4>Claimant says</h4>${r.claimant_level === "cant_tell" ? `<span class="sub">No depth stated</span>` : `${lvl({ level: r.claimant_level })} <b>${esc(LABEL[r.claimant_level])}</b>`}
+          ${r.claimant_depth_quote ? `<div class="sub" style="margin-top:6px">“${esc(r.claimant_depth_quote)}”</div>` : ""}</div>
+      </div>
+      <div class="box mt"><h4>Visual evidence</h4>${esc(r.evidence)}${r.photo_quality_issue ? `<div class="sub" style="margin-top:4px">Photo issue: ${esc(r.photo_quality_issue)}</div>` : ""}</div>`;
+    if (r.mismatch === "possible_exaggeration") body += alertBox("red", "!", `<b>Possible exaggeration.</b> ${esc(r.mismatch_reason)}`);
+    if (r.mismatch === "under_reported") body += alertBox("blue", "i", `<b>Under-reported.</b> ${esc(r.mismatch_reason)}`);
+    if (r.mismatch === "check_timing") body += alertBox("amber", "⏱", `<b>Check photo timing – not flagged as exaggeration.</b> ${esc(r.mismatch_reason)}`);
+    if (r.receded_water_marks) body += alertBox("blue", "i", `<b>Receded water marks visible.</b> Silt or debris lines suggest the water was higher earlier – see the evidence.`);
+    if (CHECKS[r.level]) body += `<div class="box mt"><h4>Suggested surveyor checks</h4>${esc(CHECKS[r.level])}</div>`;
+    if (row.duplicate_of) body += alertBox("amber", "≡", `<b>Duplicate photo.</b> This image matches claim ${esc(row.duplicate_of)}.`);
+    if (r.level === "cant_tell") body += alertBox("amber", "?", `<b>Can't tell.</b> Ask the claimant for a clearer photo showing the whole vehicle.`);
+    if (r.gemma_level) body += alertBox(r.needs_review ? "amber" : "blue", "2", `<b>Second opinion (Gemma):</b> ${esc(r.gemma_level)}${r.needs_review ? " – models disagree by 2+ levels, needs human review." : " – consistent."}`);
+    body += `<div class="box mt"><h4>Surveyor note</h4>
+        <div class="tabs"><button class="${lang === "en" ? "on" : ""}" data-l="en">English</button><button class="${lang === "hi" ? "on" : ""}" data-l="hi">हिंदी</button></div>
+        <div class="note" id="noteTxt">${esc(lang === "en" ? r.surveyor_note_en : r.surveyor_note_hi)}</div></div>
+      <div class="disclaimer">Decision support only – the surveyor makes the final call. Model: ${esc(r.model)}. Priority score <span class="num">${r.priority_score}</span>.</div>`;
+  }
+  el.innerHTML = `<div class="inner">${head}<div class="stagger">${body}</div></div>`;
+  el.scrollTop = 0;
+  const img = el.querySelector(".photo-wrap img"); if (img.complete) img.classList.add("loaded");
+  requestAnimationFrame(() => requestAnimationFrame(() => el.querySelectorAll(".bar > div").forEach(b => b.style.width = b.dataset.w + "%")));
+  el.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+    lang = b.dataset.l;
+    el.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+    const n = el.querySelector("#noteTxt"); n.style.animation = "none"; n.offsetHeight; n.style.animation = "";
+    n.textContent = lang === "en" ? r.surveyor_note_en : r.surveyor_note_hi;
+  });
+}
+
+async function load(animate = true) {
+  try {
+    const [c, s] = await Promise.all([fetch("/api/claims").then(r => r.json()), fetch("/api/stats").then(r => r.json())]);
+    rows = c;
+    if (!selected && rows.length) selected = rows[0].claim_id;
+    renderStats(s); renderQueue(animate); renderDetail();
+  } catch (err) { toast("Could not load claims: " + err.message, true); }
+}
+
+document.getElementById("gradeBtn").onclick = async e => {
+  const b = e.currentTarget;
+  b.disabled = true; b.innerHTML = `<span class="spin"></span>Grading…`;
+  try { await fetch("/api/grade_pending", { method: "POST" }); toast("Pending claims graded"); }
+  catch (err) { toast("Grading failed: " + err.message, true); }
+  finally { b.disabled = false; b.textContent = "Grade pending"; load(false); }
+};
+const dlg = document.getElementById("dlg");
+document.getElementById("newBtn").onclick = () => dlg.showModal();
+document.getElementById("cancelBtn").onclick = () => dlg.close();
+dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+document.getElementById("newForm").onsubmit = async e => {
+  e.preventDefault();
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true; btn.innerHTML = `<span class="spin"></span>Grading with Gemini…`;
+  try {
+    const fd = new FormData(e.target);
+    const depth = fd.get("claimant_depth");
+    fd.delete("claimant_depth");
+    if (depth) fd.set("claimant_text", `Claimant's answer to "How high did the water reach?": ${depth}. ` + (fd.get("claimant_text") || ""));
+    const res = await fetch("/api/claims", { method: "POST", body: fd });
+    if (!res.ok) throw new Error(await res.text());
+    const row = await res.json();
+    selected = row.claim_id; filter = "all"; dlg.close(); e.target.reset();
+    await load(true);
+    toast(`${row.claim_id} graded`);
+  } catch (err) { toast("Could not grade: " + err.message, true); }
+  finally { btn.disabled = false; btn.textContent = "Submit & grade"; }
+};
+skeleton();
+load(true);
+</script>
+</body>
+</html>
